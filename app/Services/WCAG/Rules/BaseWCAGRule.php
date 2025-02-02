@@ -18,9 +18,9 @@ abstract class BaseWCAGRule
 
     abstract public function handle($content, \Closure $next);
 
-    protected function addIssue(string $element, string $issue, string $suggestion): void
+    protected function addIssue(string $element, string $issue, string $suggestion, string $severity = 'medium'): void
     {
-        $this->issues[] = compact('element', 'issue', 'suggestion');
+        $this->issues[] = compact('element', 'issue', 'suggestion', 'severity');
     }
 
     public function getIssues(): array

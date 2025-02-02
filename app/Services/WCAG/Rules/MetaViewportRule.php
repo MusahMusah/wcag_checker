@@ -10,7 +10,12 @@ class MetaViewportRule extends BaseWCAGRule
     public function handle($content, \Closure $next)
     {
         if (!$this->parser->filter('meta[name="viewport"]')->count()) {
-            $this->addIssue('meta', 'Missing viewport meta tag', 'Ensure the document has a viewport meta tag for responsive design.');
+            $this->addIssue(
+                element: 'meta',
+                issue: 'Missing viewport meta tag',
+                suggestion: 'Ensure the document has a viewport meta tag for responsive design.',
+                severity: 'medium'
+            );
         }
 
         return $next(collect($this->getIssues())->merge($content)->toArray());

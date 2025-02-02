@@ -12,9 +12,10 @@ class KeyboardNavigation extends BaseWCAGRule
 
         if (count($focusableElements) === 0) {
             $this->addIssue(
-                'document',
-                'Keyboard navigation issue',
-                'No interactive elements detected. Ensure users can navigate via keyboard.'
+                element: 'document',
+                issue: 'Keyboard navigation issue',
+                suggestion: 'No interactive elements detected. Ensure users can navigate via keyboard.',
+                severity: 'high'
             );
         }
 
@@ -24,18 +25,20 @@ class KeyboardNavigation extends BaseWCAGRule
 
             if ($nodeName === 'a' && !$this->parser->attr('href', $node)) {
                 $this->addIssue(
-                    'a',
-                    'Anchor tag missing href',
-                    'Ensure anchor tags (`<a>`) have an `href` attribute to be keyboard-accessible.'
+                    element: 'a',
+                    issue: 'Anchor tag missing href',
+                    suggestion: 'Ensure anchor tags (`<a>`) have an `href` attribute to be keyboard-accessible.',
+                    severity: 'high'
                 );
             }
 
             // Check if tabindex is set to -1, making it unreachable via tab navigation
             if ($tabIndex === '-1' || $tabIndex === null) {
                 $this->addIssue(
-                    $nodeName,
-                    'Tabindex issue',
-                    "Element <$nodeName> is missing tabindex, set tabindex to a positive value making it inaccessible via keyboard."
+                    element: $nodeName,
+                    issue: 'Tabindex issue',
+                    suggestion: "Element <$nodeName> is missing tabindex, set tabindex to a positive value making it inaccessible via keyboard.",
+                    severity: 'high'
                 );
             }
         }

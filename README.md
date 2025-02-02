@@ -90,22 +90,56 @@ Ensure the web server points to the `public/` directory.
 The `WCAGAnalyzer` service is designed to analyze HTML documents for Web Content Accessibility Guidelines (WCAG) compliance. It follows a modular architecture:
 
 1. **Parser Factory**: The `HtmlParserFactory` allows switching between different HTML parsers (`CustomHtmlParser` or `SymfonyHtmlParser`) for flexibility.
-2. **Rules Pipeline**: Uses Laravel's `Pipeline` to pass the HTML content through various WCAG rules, such as `MissingAltRule` and `HeadingHierarchyRule`.
-3. **Rules Implementation**: Each rule extends `BaseWCAGRule` and checks specific accessibility issues, storing detected issues.
-4. **Scoring System**: Generates an accessibility score based on the ratio of detected issues to total HTML elements.
+2. **Rules Pipeline**: Uses Laravel's `Pipeline` to pass the `WCAGAnalyzer` instance through various WCAG rules, such as `MissingAltRule` and `HeadingHierarchyRule`.
+3. **Rules Implementation**: Each rule extends `BaseWCAGRule` and checks specific accessibility issues, storing detected issues along with their severity levels (`high`, `medium`, or `low`).
+4. **Scoring System**: Calculates an accessibility score based on a base score, issue impact, and penalties, ensuring a balanced approach to evaluating accessibility compliance.
 
 ### Scoring Logic
 
-1. The parser extracts all HTML elements from the document.
-2. Each rule checks for accessibility violations and logs them.
-3. The total number of violations is compared against the total number of HTML elements.
-4. The accessibility score is calculated using the formula:
+1. The parser extracts all HTML elements from the document, with a special focus on essential elements such as `img`, `a`, `input`, `button`, and headings.
+2. Each rule checks for accessibility violations and logs them along with their severity level.
+3. The base score is determined by the number of essential elements present:
+    - **0 essential elements**: Base score = 40
+    - **1-2 essential elements**: Base score = 50
+    - **3-4 essential elements**: Base score = 60
+    - **5+ essential elements**: Base score = 100
+4. A weighted penalty system is applied based on severity levels:
+    - **High severity issues**: -20 points per issue
+    - **Medium severity issues**: -10 points per issue
+    - **Low severity issues**: -5 points per issue
+5. Additional impact adjustments are applied:
+    - If the total number of elements is **less than 5** and there are issues, the impact is increased by **50%**.
+    - If there is minimal content and no essential accessibility features, the final score is capped at **40**.
+6. The final accessibility score is calculated as:
 
    ```php
-   $score = $totalElements ? round((1 - $issueCount / $totalElements) * 100, 2) : 100;
+   $score = max(0, min(100, $baseScore - $issueImpact));
    ```
 
-This ensures that documents with fewer issues receive a higher accessibility score.
+This ensures that more critical issues have a greater impact on the overall accessibility score, providing a more accurate reflection of compliance.
+
+### Severity Levels Based on WCAG Guidelines
+
+Severity is determined based on WCAG 2.1 guidelines, where violations of critical accessibility requirements are assigned higher severity levels:
+
+- **High Severity (Critical)**: Issues that severely impact accessibility and prevent users from accessing content.
+    - **1.1.1 Non-text Content** (Missing alt attributes on images, inaccessible CAPTCHA, missing text alternatives)
+    - **2.1.1 Keyboard** (Elements that cannot be accessed via keyboard)
+    - **2.2.2 Pause, Stop, Hide** (Content that auto-updates without user control)
+
+- **Medium Severity (Serious)**: Issues that significantly affect usability but do not completely block access.
+    - **1.3.1 Info and Relationships** (Incorrect heading hierarchy, missing landmarks)
+    - **1.4.3 Contrast (Minimum)** (Insufficient text contrast)
+    - **2.4.7 Focus Visible** (No visible focus indicators)
+
+- **Low Severity (Minor)**: Issues that cause inconvenience but do not significantly hinder accessibility.
+    - **3.1.1 Language of Page** (Missing `lang` attribute)
+    - **4.1.2 Name, Role, Value** (Missing ARIA attributes for better assistive technology support)
+    - **2.5.3 Label in Name** (Inconsistent labeling of interactive elements)
+
+By classifying violations according to these WCAG principles, the scoring system ensures an accurate reflection of the accessibility impact.
+
+
 
 ### Author
 Developed by [Musah Musah](https://github.com/musahmusah).

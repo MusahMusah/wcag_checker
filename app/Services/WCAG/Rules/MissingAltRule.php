@@ -10,7 +10,12 @@ class MissingAltRule extends BaseWCAGRule
     {
         $this->parser->filter('img')->each(function ($node) {
             if (!$this->parser->attr('alt', $node)) {
-                $this->addIssue('img', 'Missing alt attribute', 'Provide a meaningful alt attribute for images.');
+                $this->addIssue(
+                    element: 'img',
+                    issue: 'Missing alt attribute',
+                    suggestion: 'Provide a meaningful alt attribute for images.',
+                    severity: 'high'
+                );
             }
         });
 
