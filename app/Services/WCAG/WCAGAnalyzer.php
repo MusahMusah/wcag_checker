@@ -20,7 +20,9 @@ use Illuminate\Support\Facades\Pipeline;
 final class WCAGAnalyzer
 {
     protected HtmlParserInterface $parser;
+
     protected array $issues = [];
+
     protected array $rules = [];
 
     private const ESSENTIAL_ELEMENTS = [
@@ -30,7 +32,7 @@ final class WCAGAnalyzer
         'button',
         'h1, h2, h3, h4, h5, h6',
         'form',
-        'table'
+        'table',
     ];
 
     private array $severityWeights;
@@ -44,7 +46,7 @@ final class WCAGAnalyzer
         $this->severityWeights = [
             SeverityLevelEnum::High->value => 20,
             SeverityLevelEnum::Medium->value => 10,
-            SeverityLevelEnum::Low->value => 5
+            SeverityLevelEnum::Low->value => 5,
         ];
     }
 
@@ -82,14 +84,14 @@ final class WCAGAnalyzer
         try {
             $response = Gemini::geminiPro()->generateContent(
                 sprintf(
-                    "You are an AI assistant specializing in web accessibility. Given the following accessibility issues in an HTML document: %s, improve the issue descriptions and suggestions to be clearer and more actionable. Ensure that the output remains an array of updated issues in JSON format, without any additional explanations or formatting.",
+                    'You are an AI assistant specializing in web accessibility. Given the following accessibility issues in an HTML document: %s, improve the issue descriptions and suggestions to be clearer and more actionable. Ensure that the output remains an array of updated issues in JSON format, without any additional explanations or formatting.',
                     json_encode($this->issues)
                 )
             );
 
             return json_decode($response->text(), true);
         } catch (\Exception $e) {
-            Log::error("Error fetching AI suggestions: " . $e->getMessage());
+            Log::error('Error fetching AI suggestions: '.$e->getMessage());
 
             throw new GeminiAISuggestionException($e->getMessage(), 400);
         }
@@ -115,7 +117,7 @@ final class WCAGAnalyzer
 
         return [
             'total' => $totalElements,
-            'essential' => $essentialElementsCount
+            'essential' => $essentialElementsCount,
         ];
     }
 
@@ -123,7 +125,7 @@ final class WCAGAnalyzer
     {
         $elementCounts = $this->getElementCounts();
 
-        return match(true) {
+        return match (true) {
             $elementCounts['essential'] === 0 => 40,  // No essential elements
             $elementCounts['essential'] < 3 => 50,    // Very few essential elements
             $elementCounts['essential'] < 5 => 60,    // Some essential elements
@@ -155,7 +157,7 @@ final class WCAGAnalyzer
 
         // Apply extra impact for issues on minimal pages
         $elementCounts = $this->getElementCounts();
-        if ($elementCounts['total'] < 5 && !empty($this->issues)) {
+        if ($elementCounts['total'] < 5 && ! empty($this->issues)) {
             $impact *= 1.5; // 50% more impact for issues on minimal pages
         }
 

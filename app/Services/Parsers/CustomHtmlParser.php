@@ -11,11 +11,12 @@ use Symfony\Component\DomCrawler\Crawler;
 class CustomHtmlParser implements HtmlParserInterface
 {
     protected \DOMDocument $dom;
+
     protected \DOMXPath $xpath;
 
     public function __construct(string $htmlContent)
     {
-        $this->dom = new \DOMDocument();
+        $this->dom = new \DOMDocument;
         libxml_use_internal_errors(true);
         $this->dom->loadHTML($htmlContent);
         libxml_clear_errors();
@@ -26,7 +27,7 @@ class CustomHtmlParser implements HtmlParserInterface
     {
         // Split multiple selectors
         $selectors = array_map('trim', explode(',', $selector));
-        $results = new Collection();
+        $results = new Collection;
 
         foreach ($selectors as $selector) {
             // Handle attribute selectors

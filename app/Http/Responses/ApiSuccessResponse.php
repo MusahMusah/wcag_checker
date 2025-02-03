@@ -14,8 +14,7 @@ final class ApiSuccessResponse implements Responsable
         public readonly array $metadata = [],
         private readonly int $status = Response::HTTP_OK,
         private readonly array $headers = []
-    ) {
-    }
+    ) {}
 
     public function toResponse($request): JsonResponse|Response
     {

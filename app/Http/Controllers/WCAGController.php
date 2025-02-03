@@ -20,7 +20,7 @@ class WCAGController extends Controller
 
             return new ApiSuccessResponse(
                 data: $results,
-                message: "File has been analyzed successfully."
+                message: 'File has been analyzed successfully.'
             );
         } catch (\Exception $e) {
             return new ApiErrorResponse(message: $e->getMessage());

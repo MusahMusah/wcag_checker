@@ -8,10 +8,9 @@ use App\Enums\SeverityLevelEnum;
 
 class MetaViewportRule extends BaseWCAGRule
 {
-
     public function handle($content, \Closure $next)
     {
-        if (!$this->parser->filter('meta[name="viewport"]')->count()) {
+        if (! $this->parser->filter('meta[name="viewport"]')->count()) {
             $this->addIssue(
                 element: 'meta',
                 issue: 'Missing viewport meta tag',

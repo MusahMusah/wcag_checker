@@ -10,6 +10,7 @@ use App\Interfaces\HtmlParserInterface;
 abstract class BaseWCAGRule
 {
     protected HtmlParserInterface $parser;
+
     protected array $issues = [];
 
     public function __construct(HtmlParserInterface $parser)

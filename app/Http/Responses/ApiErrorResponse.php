@@ -17,8 +17,7 @@ final class ApiErrorResponse implements Responsable
         private readonly null|Throwable|\Exception $exception = null,
         private readonly int $code = Response::HTTP_INTERNAL_SERVER_ERROR,
         private readonly array $headers = []
-    ) {
-    }
+    ) {}
 
     public function toResponse($request): JsonResponse|Response
     {
