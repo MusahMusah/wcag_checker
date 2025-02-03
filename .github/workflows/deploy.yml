@@ -1,11 +1,6 @@
 name: Deploy
 
 on:
-  workflow_run:
-    workflows:
-      - Run Test
-    types:
-      - completed
   release:
     types:
       - published
@@ -14,7 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    environment: ${{ github.event_name == 'production' }}
+    environment: production
 
     steps:
       - name: Deploy to Coolify
