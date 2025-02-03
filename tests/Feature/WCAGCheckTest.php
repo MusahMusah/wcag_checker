@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Controllers\WCAGController;
+use App\Exceptions\GeminiAISuggestionException;
 use App\Services\WCAG\WCAGAnalyzer;
-use App\Interfaces\HtmlParserInterface;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Http\UploadedFile;
 use function Pest\Laravel\postJson;
 
 beforeEach(function () {
-    // Ensure we're working with JSON
     $this->withHeaders([
         'Accept' => 'application/json'
     ]);
@@ -15,16 +15,37 @@ beforeEach(function () {
 
 // API Tests
 it('successfully analyzes a valid HTML file via API', function () {
-    // Create a test HTML file
+    // Mock Gemini API response
+    Gemini::fake([
+        GenerateContentResponse::fake([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'text' => json_encode([
+                                    [
+                                        'element' => 'img',
+                                        'issue' => 'Enhanced: Missing alt attribute description',
+                                        'suggestion' => 'Add descriptive alt text to improve accessibility',
+                                        'severity' => 'high'
+                                    ]
+                                ])
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]),
+    ]);
+
     $htmlContent = getValidHtmlContent();
     $file = UploadedFile::fake()->createWithContent('test.html', $htmlContent);
 
-    // Make the API request
     $response = postJson('/api/check', [
         'html_file' => $file
     ]);
 
-    // Assert response structure and success
     $response->assertStatus(200)
         ->assertJsonStructure([
             'success',
@@ -39,15 +60,161 @@ it('successfully analyzes a valid HTML file via API', function () {
             'message' => 'File has been analyzed successfully.'
         ]);
 
-    // Assert data types
     $data = $response->json('data');
     expect($data['accessibility_score'])->toBeNumeric();
     expect($data['issues'])->toBeArray();
 });
 
+it('detects missing alt tags and enhances with AI suggestions', function () {
+    Gemini::fake([
+        GenerateContentResponse::fake([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'text' => json_encode([
+                                    [
+                                        'element' => 'img',
+                                        'issue' => 'Enhanced: Missing alt attribute description',
+                                        'suggestion' => 'Add descriptive alt text to improve accessibility',
+                                        'severity' => 'high'
+                                    ]
+                                ])
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]),
+    ]);
+
+    $htmlContent = '<!DOCTYPE html><html><body><img src="test.jpg"></body></html>';
+    $analyzer = new WCAGAnalyzer($htmlContent);
+    $results = $analyzer->analyze();
+
+    expect($results)
+        ->toHaveKey('accessibility_score')
+        ->toHaveKey('issues');
+
+    expect($results['issues'])
+        ->toBeArray()
+        ->not->toBeEmpty();
+
+    // Check if there's an enhanced issue about missing alt
+    $hasEnhancedAltIssue = collect($results['issues'])->contains(function ($issue) {
+        return $issue['issue'] === 'Enhanced: Missing alt attribute description';
+    });
+
+    expect($hasEnhancedAltIssue)->toBeTrue();
+});
+
+it('handles Gemini API failure gracefully', function () {
+    Gemini::fake([
+        new GeminiAISuggestionException('API Error'),
+    ]);
+
+    $htmlContent = '<!DOCTYPE html><html><body><img src="test.jpg"></body></html>';
+    $analyzer = new WCAGAnalyzer($htmlContent);
+
+    expect(fn() => $analyzer->analyze())
+        ->toThrow(GeminiAISuggestionException::class);
+});
+
+it('validates meta viewport tag', function () {
+    Gemini::fake([
+        GenerateContentResponse::fake([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'text' => json_encode([
+                                    'element' => 'meta',
+                                    'issue' => 'Missing viewport meta tag',
+                                    'suggestion' => 'Ensure the document has a viewport meta tag for responsive design.',
+                                    'severity' => 'medium'
+                                ])
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]),
+    ]);
+
+    $htmlWithoutViewport = '<!DOCTYPE html><html><head></head><body></body></html>';
+    $analyzer = new WCAGAnalyzer($htmlWithoutViewport);
+    $result = $analyzer->analyze();
+
+    $hasViewportIssue = collect($result['issues'])->contains(function ($issue) {
+        return $issue === 'meta';
+    });
+
+    expect($hasViewportIssue)->toBeTrue();
+});
+
+it('calculates correct accessibility score for perfect HTML', function () {
+    Gemini::fake([
+        GenerateContentResponse::fake([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'text' => json_encode([])
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]),
+    ]);
+
+    $perfectHtml = getValidHtmlContent();
+    $analyzer = new WCAGAnalyzer($perfectHtml);
+    $results = $analyzer->analyze();
+
+    expect($results['accessibility_score'])->toBeFloat()->toEqual(20.0);
+});
+
+it('detects missing form labels', function () {
+    Gemini::fake([
+        GenerateContentResponse::fake([
+            'candidates' => [
+                [
+                    'content' => [
+                        'parts' => [
+                            [
+                                'text' => json_encode([
+                                    [
+                                        'element' => 'input',
+                                        'issue' => 'Enhanced: Missing form label',
+                                        'suggestion' => 'Add a descriptive label for better accessibility',
+                                        'severity' => 'high'
+                                    ]
+                                ])
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]),
+    ]);
+
+    $htmlContent = '<!DOCTYPE html><html><body><form><input type="text" name="test"></form></body></html>';
+    $analyzer = new WCAGAnalyzer($htmlContent);
+    $results = $analyzer->analyze();
+
+    $hasMissingFormLabels = collect($results['issues'])->contains(function ($issue) {
+        return str_contains(strtolower($issue['element']), 'input');
+    });
+
+    expect($hasMissingFormLabels)->toBeTrue();
+});
+
 it('returns validation error when no file is provided', function () {
     $response = postJson('/api/check', []);
-
     $response->assertStatus(422)
         ->assertJsonStructure([
             'message',
@@ -59,73 +226,12 @@ it('returns validation error when no file is provided', function () {
 
 it('returns error for invalid file type', function () {
     $file = UploadedFile::fake()->create('test.pdf', 1024, 'application/pdf');
-
     $response = postJson('/api/check', [
         'html_file' => $file
     ]);
-
     $response->assertStatus(422);
 });
 
-// WCAGAnalyzer Tests
-it('detects missing alt tags in images', function () {
-    $htmlContent = '<!DOCTYPE html><html><body><img src="test.jpg"></body></html>';
-    $analyzer = new WCAGAnalyzer($htmlContent);
-
-    $results = $analyzer->analyze();
-
-    expect($results)
-        ->toHaveKey('accessibility_score')
-        ->toHaveKey('issues');
-
-    expect($results['issues'])
-        ->toBeArray()
-        ->not->toBeEmpty();
-
-    // Check if there's an issue about missing alt
-    $hasAltIssue = collect($results['issues'])->contains(function ($issue) {
-        return str_contains(strtolower($issue['element']), 'img');
-    });
-
-    expect($hasAltIssue)->toBeTrue();
-});
-
-it('validates meta viewport tag', function () {
-    $htmlWithoutViewport = '<!DOCTYPE html><html><head></head><body></body></html>';
-    $analyzer = new WCAGAnalyzer($htmlWithoutViewport);
-
-    $results = $analyzer->analyze();
-
-    $hasViewportIssue = collect($results['issues'])->contains(function ($issue) {
-        return str_contains(strtolower($issue['element']), 'meta');
-    });
-
-    expect($hasViewportIssue)->toBeTrue();
-});
-
-it('calculates correct accessibility score for perfect HTML', function () {
-    $perfectHtml = getValidHtmlContent();
-    $analyzer = new WCAGAnalyzer($perfectHtml);
-
-    $results = $analyzer->analyze();
-
-    expect($results['accessibility_score'])->toBeFloat()->toEqual(20.0);
-});
-
-it('detects missing form labels', function () {
-    $htmlContent = '<!DOCTYPE html><html><body><form><input type="text" name="test"></form></body></html>';
-    $analyzer = new WCAGAnalyzer($htmlContent);
-
-    $results = $analyzer->analyze();
-
-    $hasMissingFormLabels = collect($results['issues'])->contains(function ($issue) {
-        return str_contains(strtolower($issue['element']), 'input');
-    });
-
-    expect($hasMissingFormLabels)->toBeTrue();
-});
-
-// Helper Functions
 function getValidHtmlContent(): string
 {
     return '<!DOCTYPE html>

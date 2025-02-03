@@ -17,7 +17,7 @@ use Gemini\Laravel\Facades\Gemini;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Pipeline;
 
-class WCAGAnalyzer
+final class WCAGAnalyzer
 {
     protected HtmlParserInterface $parser;
     protected array $issues = [];
