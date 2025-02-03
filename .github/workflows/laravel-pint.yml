@@ -33,7 +33,7 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config --global user.name "musahmusah"
-          git config --global user.email "aliyumusahmusah@gmail.com"
+          git config --global user.email "shehialiyu0@gmail.com"
           
           # Explicitly authenticate using GH_PAT
           git remote set-url origin https://musahmusah:${GH_PAT}@github.com/MusahMusah/wcag_checker.git
