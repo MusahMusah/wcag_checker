@@ -11,15 +11,16 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.2
         with:
           ref: ${{ github.head_ref }}
 
-      - name: Setup
-        uses: ./.github/actions/setup
+      - name: Setup PHP and Composer
+        uses: shivammathur/setup-php@v2
         with:
+
           php-version: '8.4'
-          php-extensions: 'json, dom, curl, libxml, mbstring'
+          tools: composer:v2
 
       - name: Install Laravel Pint
         run: composer global require laravel/pint
