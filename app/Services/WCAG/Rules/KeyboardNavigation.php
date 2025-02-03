@@ -24,7 +24,7 @@ class KeyboardNavigation extends BaseWCAGRule
             $nodeName = $this->parser->getNodeName($node);
             $tabIndex = $this->parser->attr('tabindex', $node);
 
-            if ($nodeName === 'a' && !$this->parser->attr('href', $node)) {
+            if ($nodeName === 'a' && ! $this->parser->attr('href', $node)) {
                 $this->addIssue(
                     element: 'a',
                     issue: 'Anchor tag missing href',

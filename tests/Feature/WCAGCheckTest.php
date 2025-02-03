@@ -5,11 +5,12 @@ use App\Services\WCAG\WCAGAnalyzer;
 use Gemini\Laravel\Facades\Gemini;
 use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Http\UploadedFile;
+
 use function Pest\Laravel\postJson;
 
 beforeEach(function () {
     $this->withHeaders([
-        'Accept' => 'application/json'
+        'Accept' => 'application/json',
     ]);
 });
 
@@ -28,9 +29,9 @@ it('successfully analyzes a valid HTML file via API', function () {
                                         'element' => 'img',
                                         'issue' => 'Enhanced: Missing alt attribute description',
                                         'suggestion' => 'Add descriptive alt text to improve accessibility',
-                                        'severity' => 'high'
-                                    ]
-                                ])
+                                        'severity' => 'high',
+                                    ],
+                                ]),
                             ],
                         ],
                     ],
@@ -43,7 +44,7 @@ it('successfully analyzes a valid HTML file via API', function () {
     $file = UploadedFile::fake()->createWithContent('test.html', $htmlContent);
 
     $response = postJson('/api/check', [
-        'html_file' => $file
+        'html_file' => $file,
     ]);
 
     $response->assertStatus(200)
@@ -52,12 +53,12 @@ it('successfully analyzes a valid HTML file via API', function () {
             'message',
             'data' => [
                 'accessibility_score',
-                'issues'
-            ]
+                'issues',
+            ],
         ])
         ->assertJson([
             'success' => true,
-            'message' => 'File has been analyzed successfully.'
+            'message' => 'File has been analyzed successfully.',
         ]);
 
     $data = $response->json('data');
@@ -78,9 +79,9 @@ it('detects missing alt tags and enhances with AI suggestions', function () {
                                         'element' => 'img',
                                         'issue' => 'Enhanced: Missing alt attribute description',
                                         'suggestion' => 'Add descriptive alt text to improve accessibility',
-                                        'severity' => 'high'
-                                    ]
-                                ])
+                                        'severity' => 'high',
+                                    ],
+                                ]),
                             ],
                         ],
                     ],
@@ -117,7 +118,7 @@ it('handles Gemini API failure gracefully', function () {
     $htmlContent = '<!DOCTYPE html><html><body><img src="test.jpg"></body></html>';
     $analyzer = new WCAGAnalyzer($htmlContent);
 
-    expect(fn() => $analyzer->analyze())
+    expect(fn () => $analyzer->analyze())
         ->toThrow(GeminiAISuggestionException::class);
 });
 
@@ -133,8 +134,8 @@ it('validates meta viewport tag', function () {
                                     'element' => 'meta',
                                     'issue' => 'Missing viewport meta tag',
                                     'suggestion' => 'Ensure the document has a viewport meta tag for responsive design.',
-                                    'severity' => 'medium'
-                                ])
+                                    'severity' => 'medium',
+                                ]),
                             ],
                         ],
                     ],
@@ -162,7 +163,7 @@ it('calculates correct accessibility score for perfect HTML', function () {
                     'content' => [
                         'parts' => [
                             [
-                                'text' => json_encode([])
+                                'text' => json_encode([]),
                             ],
                         ],
                     ],
@@ -191,9 +192,9 @@ it('detects missing form labels', function () {
                                         'element' => 'input',
                                         'issue' => 'Enhanced: Missing form label',
                                         'suggestion' => 'Add a descriptive label for better accessibility',
-                                        'severity' => 'high'
-                                    ]
-                                ])
+                                        'severity' => 'high',
+                                    ],
+                                ]),
                             ],
                         ],
                     ],
@@ -219,15 +220,15 @@ it('returns validation error when no file is provided', function () {
         ->assertJsonStructure([
             'message',
             'errors' => [
-                'html_file'
-            ]
+                'html_file',
+            ],
         ]);
 });
 
 it('returns error for invalid file type', function () {
     $file = UploadedFile::fake()->create('test.pdf', 1024, 'application/pdf');
     $response = postJson('/api/check', [
-        'html_file' => $file
+        'html_file' => $file,
     ]);
     $response->assertStatus(422);
 });

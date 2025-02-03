@@ -19,12 +19,12 @@ class SymfonyHtmlParser implements HtmlParserInterface
 
     public function filter(string $selector): Collection
     {
-        return collect($this->crawler->filter($selector)->each(fn($node) => $node));
+        return collect($this->crawler->filter($selector)->each(fn ($node) => $node));
     }
 
     public function attr(string $attribute, \DOMNode|Crawler|null $node): ?string
     {
-//        return $this->crawler->attr($attribute);
+        //        return $this->crawler->attr($attribute);
         return $node->attr($attribute);
     }
 
