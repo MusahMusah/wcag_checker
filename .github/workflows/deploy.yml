@@ -1,6 +1,11 @@
 name: Deploy
 
 on:
+  workflow_run:
+    workflows:
+      - Laravel Pint
+    types:
+      - completed
   release:
     types:
       - published
@@ -13,6 +18,5 @@ jobs:
 
     steps:
       - name: Deploy to Coolify
-        env:
-          DEPLOY_URL: ${{ vars.DEPLOY_URL }}
-        run: curl $DEPLOY_URL
+        run: |
+          curl --location ${{ vars.DEPLOY_URL }} --header "Authorization: Bearer ${{ secrets.COOLIFY_SECRET }}"
