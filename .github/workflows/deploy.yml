@@ -1,0 +1,23 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - Run Test
+    types:
+      - completed
+  release:
+    types:
+      - published
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment: ${{ github.event_name == 'production' }}
+
+    steps:
+      - name: Deploy to Coolify
+        env:
+          DEPLOY_URL: ${{ vars.DEPLOY_URL }}
+        run: curl $DEPLOY_URL
