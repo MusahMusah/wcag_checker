@@ -86,37 +86,53 @@ Ensure the web server points to the `public/` directory.
 ## WCAGAnalyzer Architecture and Scoring Logic
 
 ### Architecture
+The `WCAGAnalyzer` service is designed to analyze HTML documents for Web Content Accessibility Guidelines (WCAG) compliance. It features a sophisticated, modular architecture:
 
-The `WCAGAnalyzer` service is designed to analyze HTML documents for Web Content Accessibility Guidelines (WCAG) compliance. It follows a modular architecture:
+1. **Parser Factory**: The `HtmlParserFactory` provides flexibility by allowing dynamic selection of HTML parsers (`CustomHtmlParser` or `SymfonyHtmlParser`).
 
-1. **Parser Factory**: The `HtmlParserFactory` allows switching between different HTML parsers (`CustomHtmlParser` or `SymfonyHtmlParser`) for flexibility.
-2. **Rules Pipeline**: Uses Laravel's `Pipeline` to pass the `WCAGAnalyzer` instance through various WCAG rules, such as `MissingAltRule` and `HeadingHierarchyRule`.
-3. **Rules Implementation**: Each rule extends `BaseWCAGRule` and checks specific accessibility issues, storing detected issues along with their severity levels (`high`, `medium`, or `low`).
-4. **Scoring System**: Calculates an accessibility score based on a base score, issue impact, and penalties, ensuring a balanced approach to evaluating accessibility compliance.
+2. **Rules Pipeline**: Utilizes Laravel's `Pipeline` to systematically process the `WCAGAnalyzer` instance through multiple WCAG rules:
+    - `MissingAltRule`
+    - `MissingLabelRule`
+    - `HeadingHierarchyRule`
+    - `MetaViewportRule`
+    - `KeyboardNavigation`
+
+3. **AI-Enhanced Suggestions**: Integrates Gemini AI to provide intelligent, actionable improvements for detected accessibility issues, enhancing the analysis with context-aware recommendations.
+
+4. **Scoring System**: Implements a comprehensive scoring mechanism that calculates accessibility compliance by considering base score, issue impact, and specific penalties.
 
 ### Scoring Logic
+The scoring algorithm is designed to provide a nuanced evaluation of web accessibility:
 
-1. The parser extracts all HTML elements from the document, with a special focus on essential elements such as `img`, `a`, `input`, `button`, and headings.
-2. Each rule checks for accessibility violations and logs them along with their severity level.
-3. The base score is determined by the number of essential elements present:
+1. **Element Analysis**:
+    - Extracts and analyzes all HTML elements
+    - Focuses on essential elements: `img`, `a`, `input`, `button`, headings, forms, and tables
+
+2. **Base Score Calculation**:
     - **0 essential elements**: Base score = 40
     - **1-2 essential elements**: Base score = 50
     - **3-4 essential elements**: Base score = 60
     - **5+ essential elements**: Base score = 100
-4. A weighted penalty system is applied based on severity levels:
+
+3. **Severity-Based Penalty System**:
     - **High severity issues**: -20 points per issue
     - **Medium severity issues**: -10 points per issue
     - **Low severity issues**: -5 points per issue
-5. Additional impact adjustments are applied:
-    - If the total number of elements is **less than 5** and there are issues, the impact is increased by **50%**.
-    - If there is minimal content and no essential accessibility features, the final score is capped at **40**.
-6. The final accessibility score is calculated as:
 
+4. **Dynamic Impact Adjustments**:
+    - For pages with less than 5 total elements and existing issues, the impact is increased by 50%
+    - Minimal content with no essential accessibility features caps the final score at 40
+
+5. **Score Calculation**:
    ```php
    $score = max(0, min(100, $baseScore - $issueImpact));
    ```
 
-This ensures that more critical issues have a greater impact on the overall accessibility score, providing a more accurate reflection of compliance.
+### AI-Powered Accessibility Insights
+The analyzer now incorporates Gemini AI to:
+- Refine issue descriptions
+- Generate more actionable suggestions
+- Provide context-aware improvements for accessibility challenges
 
 ### Severity Levels Based on WCAG Guidelines
 
@@ -139,6 +155,20 @@ Severity is determined based on WCAG 2.1 guidelines, where violations of critica
 
 By classifying violations according to these WCAG principles, the scoring system ensures an accurate reflection of the accessibility impact.
 
+### Key Features
+- Modular rule-based analysis
+- Flexible HTML parser support
+- AI-enhanced issue recommendations
+- Comprehensive accessibility scoring
+- Granular severity classification
+
+### Requirements
+- Gemini AI API KEY
+
+### Future Enhancements
+- Expanded rule set
+- More detailed AI suggestions
+- Enhanced scoring granularity
 
 
 ### Author
