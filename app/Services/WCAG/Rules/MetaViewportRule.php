@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\WCAG\Rules;
 
+use App\Enums\SeverityLevelEnum;
+
 class MetaViewportRule extends BaseWCAGRule
 {
 
@@ -13,8 +15,7 @@ class MetaViewportRule extends BaseWCAGRule
             $this->addIssue(
                 element: 'meta',
                 issue: 'Missing viewport meta tag',
-                suggestion: 'Ensure the document has a viewport meta tag for responsive design.',
-                severity: 'medium'
+                severity: SeverityLevelEnum::Medium
             );
         }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\WCAG\Rules;
 
+use App\Enums\SeverityLevelEnum;
+
 class HeadingHierarchyRule extends BaseWCAGRule
 {
     public function handle($content, \Closure $next)
@@ -16,7 +18,11 @@ class HeadingHierarchyRule extends BaseWCAGRule
 
             // Check if the current level skips more than one level from the previous one
             if ($lastLevel && ($currentLevel > $lastLevel + 1)) {
-                $this->addIssue($this->parser->getNodeName($node), 'Skipped heading level', 'Use a proper heading hierarchy.');
+                $this->addIssue(
+                    element: $this->parser->getNodeName($node),
+                    issue: 'Skipped heading level',
+                    severity: SeverityLevelEnum::High
+                );
             }
 
             // Update lastLevel only after checking the skipped levels

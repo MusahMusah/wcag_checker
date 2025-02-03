@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\interfaces\HtmlParserInterface;
+use App\Interfaces\HtmlParserInterface;
 use App\Services\Parsers\SymfonyHtmlParser;
 use Illuminate\Support\ServiceProvider;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Parsers;
 
-use App\interfaces\HtmlParserInterface;
+use App\Interfaces\HtmlParserInterface;
 
 class HtmlParserFactory
 {

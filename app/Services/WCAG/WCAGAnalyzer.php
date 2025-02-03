@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\WCAG;
 
-use App\interfaces\HtmlParserInterface;
+use App\Enums\SeverityLevelEnum;
+use App\Exceptions\GeminiAISuggestionException;
+use App\Interfaces\HtmlParserInterface;
 use App\Services\Parsers\HtmlParserFactory;
 use App\Services\WCAG\Rules\HeadingHierarchyRule;
 use App\Services\WCAG\Rules\KeyboardNavigation;
 use App\Services\WCAG\Rules\MetaViewportRule;
 use App\Services\WCAG\Rules\MissingAltRule;
 use App\Services\WCAG\Rules\MissingLabelRule;
+use Gemini\Laravel\Facades\Gemini;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Pipeline;
 
 class WCAGAnalyzer
@@ -29,17 +33,19 @@ class WCAGAnalyzer
         'table'
     ];
 
-    private const SEVERITY_WEIGHTS = [
-        'high' => 20,
-        'medium' => 10,
-        'low' => 5
-    ];
+    private array $severityWeights;
 
     public function __construct(string $htmlContent, string $parserType = 'symfony')
     {
         $this->parser = HtmlParserFactory::create($htmlContent, $parserType);
         app()->bind(HtmlParserInterface::class, fn () => $this->parser);
         $this->registerRules();
+
+        $this->severityWeights = [
+            SeverityLevelEnum::High->value => 20,
+            SeverityLevelEnum::Medium->value => 10,
+            SeverityLevelEnum::Low->value => 5
+        ];
     }
 
     protected function registerRules(): void
@@ -53,14 +59,40 @@ class WCAGAnalyzer
         ];
     }
 
+    /**
+     * @throws GeminiAISuggestionException
+     */
     public function analyze(): array
     {
         $this->issues = Pipeline::send($this)->through($this->rules)->thenReturn();
 
+        $issuesWithAISuggestion = $this->fetchAISuggestions();
+
         return [
             'accessibility_score' => $this->calculateScore(),
-            'issues' => $this->issues,
+            'issues' => $issuesWithAISuggestion,
         ];
+    }
+
+    /**
+     * @throws GeminiAISuggestionException
+     */
+    protected function fetchAISuggestions(): array
+    {
+        try {
+            $response = Gemini::geminiPro()->generateContent(
+                sprintf(
+                    "You are an AI assistant specializing in web accessibility. Given the following accessibility issues in an HTML document: %s, improve the issue descriptions and suggestions to be clearer and more actionable. Ensure that the output remains an array of updated issues in JSON format, without any additional explanations or formatting.",
+                    json_encode($this->issues)
+                )
+            );
+
+            return json_decode($response->text(), true);
+        } catch (\Exception $e) {
+            Log::error("Error fetching AI suggestions: " . $e->getMessage());
+
+            throw new GeminiAISuggestionException($e->getMessage(), 400);
+        }
     }
 
     protected function calculateScore(): float
@@ -101,11 +133,11 @@ class WCAGAnalyzer
 
     protected function countIssuesBySeverity(): array
     {
-        $issueCountByType = array_fill_keys(array_keys(self::SEVERITY_WEIGHTS), 0);
+        $issueCountByType = array_fill_keys(array_keys($this->severityWeights), 0);
 
         foreach ($this->issues as $issue) {
-            if (isset($issueCountByType[$issue['severity']])) {
-                $issueCountByType[$issue['severity']]++;
+            if (isset($issue['severity']->value) && isset($issueCountByType[$issue['severity']->value])) {
+                $issueCountByType[$issue['severity']->value]++;
             }
         }
 
@@ -118,7 +150,7 @@ class WCAGAnalyzer
         $impact = 0;
 
         foreach ($issueCountByType as $severity => $count) {
-            $impact += $count * self::SEVERITY_WEIGHTS[$severity];
+            $impact += $count * $this->severityWeights[$severity];
         }
 
         // Apply extra impact for issues on minimal pages

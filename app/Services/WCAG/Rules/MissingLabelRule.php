@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\WCAG\Rules;
 
+use App\Enums\SeverityLevelEnum;
+
 class MissingLabelRule extends BaseWCAGRule
 {
     public function handle($content, \Closure $next)
@@ -13,8 +15,7 @@ class MissingLabelRule extends BaseWCAGRule
                 $this->addIssue(
                     element: $this->parser->getNodeName($node),
                     issue: 'Missing accessible label',
-                    suggestion: 'Provide an aria-label or associate input with a <label>.',
-                    severity: 'high'
+                    severity: SeverityLevelEnum::High
                 );
             }
         });

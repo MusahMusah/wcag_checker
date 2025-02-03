@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\WCAG\Rules;
 
+use App\Enums\SeverityLevelEnum;
+
 class KeyboardNavigation extends BaseWCAGRule
 {
     public function handle($content, \Closure $next)
@@ -14,8 +16,7 @@ class KeyboardNavigation extends BaseWCAGRule
             $this->addIssue(
                 element: 'document',
                 issue: 'Keyboard navigation issue',
-                suggestion: 'No interactive elements detected. Ensure users can navigate via keyboard.',
-                severity: 'high'
+                severity: SeverityLevelEnum::High
             );
         }
 
@@ -27,8 +28,7 @@ class KeyboardNavigation extends BaseWCAGRule
                 $this->addIssue(
                     element: 'a',
                     issue: 'Anchor tag missing href',
-                    suggestion: 'Ensure anchor tags (`<a>`) have an `href` attribute to be keyboard-accessible.',
-                    severity: 'high'
+                    severity: SeverityLevelEnum::High
                 );
             }
 
@@ -37,8 +37,7 @@ class KeyboardNavigation extends BaseWCAGRule
                 $this->addIssue(
                     element: $nodeName,
                     issue: 'Tabindex issue',
-                    suggestion: "Element <$nodeName> is missing tabindex, set tabindex to a positive value making it inaccessible via keyboard.",
-                    severity: 'high'
+                    severity: SeverityLevelEnum::High
                 );
             }
         }

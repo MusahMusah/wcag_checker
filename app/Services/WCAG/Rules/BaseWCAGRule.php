@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\WCAG\Rules;
 
-use App\interfaces\HtmlParserInterface;
+use App\Enums\SeverityLevelEnum;
+use App\Interfaces\HtmlParserInterface;
 
 abstract class BaseWCAGRule
 {
@@ -18,8 +19,9 @@ abstract class BaseWCAGRule
 
     abstract public function handle($content, \Closure $next);
 
-    protected function addIssue(string $element, string $issue, string $suggestion, string $severity = 'medium'): void
+    protected function addIssue(string $element, string $issue, SeverityLevelEnum $severity): void
     {
+        $suggestion = '';
         $this->issues[] = compact('element', 'issue', 'suggestion', 'severity');
     }
 

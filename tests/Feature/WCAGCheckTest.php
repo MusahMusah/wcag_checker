@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\WCAGController;
 use App\Services\WCAG\WCAGAnalyzer;
-use App\interfaces\HtmlParserInterface;
+use App\Interfaces\HtmlParserInterface;
 use Illuminate\Http\UploadedFile;
 use function Pest\Laravel\postJson;
 

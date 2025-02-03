@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\WCAG\Rules;
 
+use App\Enums\SeverityLevelEnum;
+
 class MissingAltRule extends BaseWCAGRule
 {
     public function handle($content, \Closure $next)
@@ -13,8 +15,7 @@ class MissingAltRule extends BaseWCAGRule
                 $this->addIssue(
                     element: 'img',
                     issue: 'Missing alt attribute',
-                    suggestion: 'Provide a meaningful alt attribute for images.',
-                    severity: 'high'
+                    severity: SeverityLevelEnum::High
                 );
             }
         });
