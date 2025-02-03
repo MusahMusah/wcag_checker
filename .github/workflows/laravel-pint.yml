@@ -29,9 +29,12 @@ jobs:
         run: pint
 
       - name: Push Changes Back to Repo
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "musahmusah"
           git config user.email "aliyumusahmusah@gmail.com"
+          git remote set-url origin https://musahmusah:${GH_PAT}@github.com/MusahMusah/wcag_checker.git
           git add .
           git commit -m "Laravel Pint" || exit 0
-          git push
+          git push origin main
