@@ -30,17 +30,14 @@ jobs:
 
       - name: Push Changes Back to Repo
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name "musahmusah"
+          git config --global user.name "github-actions"
           git config --global user.email "shehialiyu0@gmail.com"
-          
-          # Explicitly authenticate using GH_PAT
-          git remote set-url origin https://musahmusah:${GH_PAT}@github.com/MusahMusah/wcag_checker.git
           
           # Check if there are any changes
           git diff --quiet && exit 0
           
           git add .
           git commit -m "Laravel Pint formatting" || exit 0
-          git push origin main
+          git push
